@@ -19,6 +19,8 @@
 #ifndef PYOTHERSIDE_QPYTHON_WORKER_H
 #define PYOTHERSIDE_QPYTHON_WORKER_H
 
+#include "callback.h"
+
 #include <QObject>
 #include <QString>
 #include <QVariant>
@@ -35,11 +37,13 @@ class QPythonWorker : public QObject {
 
     public slots:
         void process(QVariant func, QVariant unboxed_args, QJSValue *callback);
+        void process_native(QVariant func, QVariant unboxed_args, NativeCallback callback);
         void import(QString func, QJSValue *callback);
         void import_names(QString func, QVariant args, QJSValue *callback);
 
     signals:
         void finished(QVariant result, QJSValue *callback);
+        void finished_native(QVariant result, NativeCallback callback);
         void imported(bool result, QJSValue *callback);
 
     private:

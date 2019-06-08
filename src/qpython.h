@@ -20,6 +20,7 @@
 #define PYOTHERSIDE_QPYTHON_H
 
 #include "python_wrap.h"
+#include "callback.h"
 
 #include <QVariant>
 #include <QObject>
@@ -303,6 +304,11 @@ class QPython : public QObject {
         call_internal(QVariant func, QVariant boxed_args=QVariantList(),
             bool unbox=true);
 
+        void
+        call_native(QVariant func,
+             QVariant args=QVariantList(),
+             NativeCallback callback=NativeCallback());
+
         /**
          * \brief Get an attribute value of a Python object synchronously
          *
@@ -366,6 +372,7 @@ class QPython : public QObject {
 
         /* For internal use only */
         void process(QVariant func, QVariant unboxed_args, QJSValue *callback);
+        void process_native(QVariant func, QVariant unboxed_args, NativeCallback callback);
         void import(QString name, QJSValue *callback);
         void import_names(QString name, QVariant args, QJSValue *callback);
 

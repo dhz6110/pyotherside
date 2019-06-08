@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  **/
 
+#include <functional>
 #include "qml_python_bridge.h"
 
 #include "qpython.h"
@@ -50,6 +51,8 @@ QPython::QPython(QObject *parent, int api_version_major, int api_version_minor)
         priv = new QPythonPriv;
     }
 
+    qRegisterMetaType<NativeCallback>("NativeCallback");
+
     worker->moveToThread(&thread);
 
     QObject::connect(priv, SIGNAL(receive(QVariant)),
@@ -59,6 +62,15 @@ QPython::QPython(QObject *parent, int api_version_major, int api_version_minor)
                      worker, SLOT(process(QVariant,QVariant,QJSValue *)));
     QObject::connect(worker, SIGNAL(finished(QVariant,QJSValue *)),
                      this, SLOT(finished(QVariant,QJSValue *)));
+
+    QObject::connect(this, &QPython::process_native,
+                     worker, &QPythonWorker::process_native);
+    QObject::connect(worker, &QPythonWorker::finished_native,
+                     this, [](QVariant v, std::function<void(const QVariant)> c) {
+        if (c) {
+            return c(v);
+        }
+    });
 
     QObject::connect(this, SIGNAL(import(QString,QJSValue *)),
                      worker, SLOT(import(QString,QJSValue *)));
@@ -325,6 +337,15 @@ QPython::call(QVariant func, QVariant boxed_args, QJSValue callback)
     QVariantList unboxed_args = unboxArgList(boxed_args);
 
     emit process(func, unboxed_args, cb);
+}
+
+void QPython::call_native(QVariant func, QVariant boxed_args, std::function<void(const QVariant)> callback)
+{
+    // Unbox QJSValue from QVariant, since QJSValue::toVariant() can cause calls into
+    // QML engine and we don't want that to happen from non-GUI thread
+    QVariantList unboxed_args = unboxArgList(boxed_args);
+
+    emit process_native(func, unboxed_args, callback);
 }
 
 QVariant

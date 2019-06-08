@@ -40,6 +40,15 @@ QPythonWorker::process(QVariant func, QVariant unboxed_args, QJSValue *callback)
     }
 }
 
+void QPythonWorker::process_native(QVariant func, QVariant unboxed_args,
+                                   NativeCallback callback)
+{
+    QVariant result = qpython->call_internal(func, unboxed_args, false);
+    if (callback) {
+        emit finished_native(result, callback);
+    }
+}
+
 void
 QPythonWorker::import(QString name, QJSValue *callback)
 {
